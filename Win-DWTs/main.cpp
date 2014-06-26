@@ -1,4 +1,6 @@
 #include <iostream>
+#include <cmath>
+#include <fstream>
 
 using namespace std;
 
@@ -76,27 +78,79 @@ void Haar_Decomposition(double *vec, int n, bool normal)
 	}
 }
 
-void haar_Compress(double *vec, int n, double percentage)
+#define ERROR 0.0000000001
+
+void Haar_Compress(double *vec, int n, double percentage)
 {
-	double energy = 0.0;
-	double threshold;
+	double t, tMax, tMin, s, e;
+
+	tMax = tMin = abs(vec[0]);
+	s = 0.0;
 
 	for (int i = 0; i < n; i++)
-		energy += abs(vec[i]);
+	{
+		if (abs(vec[i]) > tMax) tMax = abs(vec[i]);
+		if (abs(vec[i]) < tMin) tMin = abs(vec[i]);
+		s += abs(vec[i]);
+	}
 
-	threshold = energy * percentage;
+	e = s * percentage;
+
+	do
+	{
+		t = (tMax + tMin) / 2.0;
+		s = 0.0;
+
+		for (int i = 0; i < n; i++)
+		{
+			if (abs(vec[i]) < t) s += pow(vec[i], 2.0);
+		}
+
+		if (s < pow(e, 2.0)) tMin = t;
+		else tMax = t;
+
+	} while ((tMax - tMin) > ERROR);
 
 	for (int i = 0; i < n; i++)
-	if (abs(vec[i]) < threshold)
-		vec[i] = 0.0;
+	{
+		if (abs(vec[i]) < t)
+		{
+			vec[i] = 0.0;
+		}
+	}
 }
 
-#define POINTS 1024
+void Haar_Levels_Compress(double *vec, int n, double percentage)
+{
+	int levels = (int)log2((double)n);
+	double *v;
+
+	for (int i = n / 2; i > 1; i /= 2)
+	{
+		v = &vec[i - 1];
+		Haar_Compress(v, i, percentage);
+	}
+}
+
+void gnuplot_dat(const char *filename, double *x, double *y, int n)
+{
+	ofstream out;
+
+	out.open(filename, ios_base::trunc);
+
+	for (int i = 0; i < n; i++)
+		out << x[i] << '\t' << y[i] << '\n';
+
+	out.close();
+}
+
+#define POINTS 32
 #define PI atan(1) * 4
 
 int main(int argc, char **argv)
 {
-	double vec[POINTS];
+	double domain[POINTS];
+	double image[POINTS];
 	double x1 = 0.0, x2 = 1.0;
 	double x, alpha;
 
@@ -104,12 +158,18 @@ int main(int argc, char **argv)
 	{
 		alpha = i / (double)(POINTS);
 		x = x1 * (1.0 - alpha) + x2 * alpha;
-		vec[i] = sin(2 * PI * x) + 1 - sqrt(abs(8 * PI * (x - 0.5)));
+		domain[i] = x;
+		image[i] = sin(2 * PI * x) + 1 - sqrt(abs(8 * PI * (x - 0.5)));
 	}
 
-	Haar_Decomposition(vec, 4, true);
-	haar_Compress(vec, 4, 0.10);
-	Haar_Composition(vec, 4, true);
+	gnuplot_dat("test1.dat", domain, image, POINTS);
+
+	Haar_Decomposition(image, POINTS, false);
+	Haar_Levels_Compress(image, POINTS, 1.0);
+	//Haar_Compress(image, POINTS, 0.90);
+	Haar_Composition(image, POINTS, false);
+
+	gnuplot_dat("test2.dat", domain, image, POINTS);
 
 	return 0;
 }
