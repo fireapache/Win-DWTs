@@ -84,6 +84,14 @@ void Haar_Compress(double *vec, int n, double percentage)
 {
 	double t, tMax, tMin, s, e;
 
+	if (percentage >= 1.0)
+	{
+		for (int i = 0; i < n; i++)
+		{
+			vec[i] = 0.0;
+		}
+	}
+
 	tMax = tMin = abs(vec[0]);
 	s = 0.0;
 
@@ -122,12 +130,11 @@ void Haar_Compress(double *vec, int n, double percentage)
 
 void Haar_Levels_Compress(double *vec, int n, double percentage)
 {
-	int levels = (int)log2((double)n);
 	double *v;
 
-	for (int i = n / 2; i > 1; i /= 2)
+	for (int i = 1; i < n; i *= 2)
 	{
-		v = &vec[i - 1];
+		v = &vec[i];
 		Haar_Compress(v, i, percentage);
 	}
 }
@@ -144,32 +151,184 @@ void gnuplot_dat(const char *filename, double *x, double *y, int n)
 	out.close();
 }
 
-#define POINTS 32
-#define PI atan(1) * 4
+void gnuplot_dat_Vdecomposition(const char *file, double x1, double x2, double *v, int n, int levels, bool normal)
+{
+	ofstream out;
+	double x, alpha;
+
+	if (normal)
+	for (int i = 0; i < n; i++)
+		v[i] = v[i] / sqrt(float(n));
+
+	for (int i = 0; i < levels; i++)
+	{
+		Haar_DecompositionStep(v, n, normal);
+		n /= 2;
+	}
+
+	out.open(file, ios_base::trunc);
+
+	for (int i = 0; i < n; i++)
+	{
+		alpha = (double)i / (double)(n);
+		x = x1 * (1.0 - alpha) + x2 * alpha;
+
+		out << x << '\t' << v[i] << '\n';
+	}
+
+	out.close();
+
+	for (int i = levels; i > 0; i--)
+	{
+		Haar_CompositionStep(v, n, normal);
+		n *= 2;
+	}
+
+	if (normal)
+	for (int i = 0; i < n; i++)
+		v[i] = v[i] * sqrt(float(n));
+}
+
+void gnuplot_dat_Wdecomposition(const char *file, double x1, double x2, double *v, int n, int levels, bool normal)
+{
+	ofstream out;
+	double x, alpha;
+
+	if (normal)
+	for (int i = 0; i < n; i++)
+		v[i] = v[i] / sqrt(float(n));
+
+	for (int i = 0; i < levels; i++)
+	{
+		Haar_DecompositionStep(v, n, normal);
+		n /= 2;
+	}
+
+	out.open(file, ios_base::trunc);
+
+	for (int i = 0; i < n; i++)
+	{
+		alpha = (double)i / (double)(n);
+		x = x1 * (1.0 - alpha) + x2 * alpha;
+		x += (x2 - x1) / (2 * n);
+		out << x << '\t' << v[i + n] << '\n';
+	}
+
+	out.close();
+
+	for (int i = levels; i > 0; i--)
+	{
+		Haar_CompositionStep(v, n, normal);
+		n *= 2;
+	}
+
+	if (normal)
+	for (int i = 0; i < n; i++)
+		v[i] = v[i] * sqrt(float(n));
+}
+
+void gnuplot_dat_VWdecomposition(const char *file1, const char *file2, double x1, double x2, double *v, int n, int levels, bool normal)
+{
+	ofstream out1, out2;
+	double x, alpha;
+
+	if (normal)
+	for (int i = 0; i < n; i++)
+		v[i] = v[i] / sqrt(float(n));
+
+	for (int i = 0; i < levels; i++)
+	{
+		Haar_DecompositionStep(v, n, normal);
+		n /= 2;
+	}
+
+	out1.open(file1, ios_base::trunc);
+	out2.open(file2, ios_base::trunc);
+
+	for (int i = 0; i < n; i++)
+	{
+		alpha = (double)i / (double)(n);
+		x = x1 * (1.0 - alpha) + x2 * alpha;
+
+		out1 << x << '\t' << v[i] << '\n';
+		out2 << x << '\t' << v[i + n] << '\n';
+	}
+
+	out1.close();
+	out2.close();
+
+	for (int i = levels; i > 0; i--)
+	{
+		Haar_CompositionStep(v, n, normal);
+		n *= 2;
+	}
+
+	if (normal)
+	for (int i = 0; i < n; i++)
+		v[i] = v[i] * sqrt(float(n));
+}
+
+void test0(); // 27/06/2014
 
 int main(int argc, char **argv)
 {
+	test0();
+
+	return 0;
+}
+
+#define POINTS 64
+#define PI atan(1) * 4
+
+void test0()
+{
 	double domain[POINTS];
 	double image[POINTS];
+	double t1[POINTS], t2[POINTS], t3[POINTS];
 	double x1 = 0.0, x2 = 1.0;
 	double x, alpha;
 
 	for (int i = 0; i < POINTS; i++)
 	{
-		alpha = i / (double)(POINTS);
+		alpha = (double)i / (double)(POINTS);
 		x = x1 * (1.0 - alpha) + x2 * alpha;
 		domain[i] = x;
 		image[i] = sin(2 * PI * x) + 1 - sqrt(abs(8 * PI * (x - 0.5)));
+		t1[i] = t2[i] = t3[i] = image[i];
 	}
 
-	gnuplot_dat("test1.dat", domain, image, POINTS);
+	gnuplot_dat_Vdecomposition("1_V.dat", 0.0, 1.0, image, POINTS, 1, true);
+	gnuplot_dat_Wdecomposition("1_1W.dat", 0.0, 1.0, image, POINTS, 1, true);
+	gnuplot_dat_Wdecomposition("1_2W.dat", 0.0, 1.0, image, POINTS, 2, true);
+	gnuplot_dat_Wdecomposition("1_3W.dat", 0.0, 1.0, image, POINTS, 3, true);
 
-	Haar_Decomposition(image, POINTS, false);
-	Haar_Levels_Compress(image, POINTS, 1.0);
-	//Haar_Compress(image, POINTS, 0.90);
-	Haar_Composition(image, POINTS, false);
+	Haar_Decomposition(t1, POINTS, true);
+	//Haar_Compress(t1, POINTS, 0.01);
+	Haar_Levels_Compress(t1, POINTS, 0.01);
+	Haar_Composition(t1, POINTS, true);
 
-	gnuplot_dat("test2.dat", domain, image, POINTS);
+	gnuplot_dat_Vdecomposition("2_V.dat", 0.0, 1.0, t1, POINTS, 1, true);
+	gnuplot_dat_Wdecomposition("2_1W.dat", 0.0, 1.0, t1, POINTS, 1, true);
+	gnuplot_dat_Wdecomposition("2_2W.dat", 0.0, 1.0, t1, POINTS, 2, true);
+	gnuplot_dat_Wdecomposition("2_3W.dat", 0.0, 1.0, t1, POINTS, 3, true);
 
-	return 0;
+	Haar_Decomposition(t2, POINTS, true);
+	//Haar_Compress(t2, POINTS, 0.02);
+	Haar_Levels_Compress(t2, POINTS, 0.02);
+	Haar_Composition(t2, POINTS, true);
+
+	gnuplot_dat_Vdecomposition("3_V.dat", 0.0, 1.0, t2, POINTS, 1, true);
+	gnuplot_dat_Wdecomposition("3_1W.dat", 0.0, 1.0, t2, POINTS, 1, true);
+	gnuplot_dat_Wdecomposition("3_2W.dat", 0.0, 1.0, t2, POINTS, 2, true);
+	gnuplot_dat_Wdecomposition("3_3W.dat", 0.0, 1.0, t2, POINTS, 3, true);
+
+	Haar_Decomposition(t3, POINTS, true);
+	//Haar_Compress(t3, POINTS, 0.035);
+	Haar_Levels_Compress(t3, POINTS, 0.035);
+	Haar_Composition(t3, POINTS, true);
+
+	gnuplot_dat_Vdecomposition("4_V.dat", 0.0, 1.0, t3, POINTS, 1, true);
+	gnuplot_dat_Wdecomposition("4_1W.dat", 0.0, 1.0, t3, POINTS, 1, true);
+	gnuplot_dat_Wdecomposition("4_2W.dat", 0.0, 1.0, t3, POINTS, 2, true);
+	gnuplot_dat_Wdecomposition("4_3W.dat", 0.0, 1.0, t3, POINTS, 3, true);
 }
