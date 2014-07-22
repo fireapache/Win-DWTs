@@ -59,6 +59,108 @@ void Haar_CompositionStep(double *vec, int n, bool normal)
 	delete[] vecp;
 }
 
+void VinisNormalization(double *vec, UINT n)
+{
+	UINT levels = log2(n);
+
+	for (UINT level = 0; level < levels; level++)
+	{
+		UINT inicio;
+
+		if (level == 0) inicio = 0;
+		else        	inicio = (UINT)pow(2.0, (double)(level));
+
+		UINT fim = (UINT)pow(2.0, (double)(level + 1));
+
+		for (UINT i = inicio; i < fim; i++)
+			vec[i] *= pow(2.0, -(double)level / 2.0);
+	}
+}
+
+void VinisStandardMatrixNormalization(double **mat, UINT n, bool invert)
+{
+	UINT levels = log2(n);
+
+	for (UINT levelL = 0; levelL < levels; levelL++)
+	{
+		UINT inicioL;
+
+		if (levelL == 0)	inicioL = 0;
+		else        		inicioL = (UINT)pow(2.0, (double)(levelL));
+
+		UINT fimL = (UINT)pow(2.0, (double)(levelL + 1));
+
+		for (UINT l = inicioL; l < fimL; l++)
+		{
+			for (UINT levelC = 0; levelC < levels; levelC++)
+			{
+				UINT inicioC;
+
+				if (levelC == 0)	inicioC = 0;
+				else        		inicioC = (UINT)pow(2.0, (double)(levelC));
+
+				UINT fimC = (UINT)pow(2.0, (double)(levelC + 1));
+
+				if (invert)
+				{
+					for (UINT c = inicioC; c < fimC; c++)
+						mat[l][c] *= pow(2.0, (double)(levelL + levelC) / 2.0);
+				}
+				else
+				{
+					for (UINT c = inicioC; c < fimC; c++)
+						mat[l][c] /= pow(2.0, (double)(levelL + levelC) / 2.0);
+				}
+			}
+		}
+	}
+}
+
+void VinisNonStandardMatrixNormalization(double **matrix, UINT n, bool invert)
+{
+	double div;
+	UINT start, limit;
+
+	UINT level = (UINT)(log((double)n) / log(2.0)) - 1;
+
+	if (level <= 0) return;
+
+	for (UINT i = level; i > 0; i--)
+	{
+		div = pow(2.0, (double)i);
+		start = (UINT)div;
+		limit = (UINT)pow(2.0, (double)i + 1);
+
+		for (UINT l = 0; l < limit / 2; l++)
+		{
+			for (UINT c = start; c < limit; c++)
+			{
+				matrix[l][c] /= div;
+			}
+		}
+
+		if (invert)
+		{
+			for (UINT l = start; l < limit; l++)
+			for (UINT c = 0; c < limit; c++)
+				matrix[l][c] *= div;
+		}
+		else
+		{
+			for (UINT l = start; l < limit; l++)
+			for (UINT c = 0; c < limit; c++)
+				matrix[l][c] /= div;
+		}
+
+	}
+}
+
+void VinisMatrixNormalization(double **mat, UINT n, bool standard, bool invert)
+{
+	if (standard)	VinisStandardMatrixNormalization(mat, n, invert);
+	else			VinisNonStandardMatrixNormalization(mat, n, invert);
+}
+
 // Composição completa tipo Haar de um vetor.
 void Haar_Composition(double *vec, int n, bool normal)
 {
