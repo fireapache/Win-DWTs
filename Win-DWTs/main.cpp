@@ -584,6 +584,7 @@ void gnuplot_dat_VWdecomposition(const char *file1, const char *file2, double x1
 }
 
 void test0(); // 27/06/2014
+void test1(); // 22/07/2014
 
 int main(int argc, char **argv)
 {
@@ -592,7 +593,13 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-#define POINTS 64
+#define POINTS 1024
+
+void test1()
+{
+
+}
+
 #define PI atan(1) * 4
 
 void test0()
