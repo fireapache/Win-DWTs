@@ -168,6 +168,190 @@ void Haar_Levels_Compress(double *vec, int n, double percentage)
 	}
 }
 
+void Haar_StandardDecomposition(double **matrix, int rows, int cols, bool normal)
+{
+	double *temp_row = new double[cols];
+	double *temp_col = new double[rows];
+
+	for (int i = 0; i < rows; i++)
+	{
+		for (int j = 0; j < cols; j++)
+			temp_row[j] = matrix[i][j];
+
+		Haar_Decomposition(temp_row, cols, normal);
+
+		for (int j = 0; j < cols; j++)
+			matrix[i][j] = temp_row[j];
+	}
+
+	for (int i = 0; i < cols; i++)
+	{
+		for (int j = 0; j < rows; j++)
+			temp_col[j] = matrix[j][i];
+
+		Haar_Decomposition(temp_col, rows, normal);
+
+		for (int j = 0; j < rows; j++)
+			matrix[j][i] = temp_col[j];
+	}
+
+	delete[] temp_row;
+	delete[] temp_col;
+}
+
+void Haar_NonStandardDecomposition(double **matrix, int rows, int cols, bool normal)
+{
+	int h = rows, w = cols;
+	double *temp_row = new double[cols];
+	double *temp_col = new double[rows];
+
+
+	if (normal)
+	{
+		for (int i = 0; i < rows; i++)
+		for (int j = 0; j < cols; j++)
+			matrix[i][j] = matrix[i][j] / cols;
+	}
+
+
+	while (w > 1 || h > 1)
+	{
+		if (w > 1)
+		for (int i = 0; i < h; i++)
+		{
+			for (int j = 0; j < w; j++)
+				temp_row[j] = matrix[i][j];
+
+			Haar_DecompositionStep(temp_row, w, normal);
+
+			for (int j = 0; j < w; j++)
+				matrix[i][j] = temp_row[j];
+		}
+
+		if (h > 1)
+		for (int i = 0; i < w; i++)
+		{
+			for (int j = 0; j < h; j++)
+				temp_col[j] = matrix[j][i];
+
+			Haar_DecompositionStep(temp_col, h, normal);
+
+			for (int j = 0; j < h; j++)
+				matrix[j][i] = temp_col[j];
+		}
+
+		if (w > 1) w /= 2;
+		if (h > 1) h /= 2;
+	}
+}
+
+void Haar_MatrixDecomposition(double **matrix, int rows, int cols, bool normal, bool standard)
+{
+	/*
+	if (rows != cols)
+	{
+	cout << "Não é uma matriz quadrada!" << endl;
+	return;
+	}
+	*/
+
+	if (standard) Haar_StandardDecomposition(matrix, rows, cols, normal);
+	else          Haar_NonStandardDecomposition(matrix, rows, cols, normal);
+}
+
+void Haar_StandardComposition(double **matrix, int rows, int cols, bool normal)
+{
+	double *temp_row = new double[cols];
+	double *temp_col = new double[rows];
+
+	for (int i = 0; i < cols; i++)
+	{
+		for (int j = 0; j < rows; j++)
+			temp_col[j] = matrix[j][i];
+
+		Haar_Composition(temp_col, rows, normal);
+
+		for (int j = 0; j < rows; j++)
+			matrix[j][i] = temp_col[j];
+	}
+
+	for (int i = 0; i < rows; i++)
+	{
+		for (int j = 0; j < cols; j++)
+			temp_row[j] = matrix[i][j];
+
+		Haar_Composition(temp_row, cols, normal);
+
+		for (int j = 0; j < cols; j++)
+			matrix[i][j] = temp_row[j];
+	}
+
+	delete[] temp_row;
+	delete[] temp_col;
+}
+
+void Haar_NonStandardComposition(double **matrix, int rows, int cols, bool normal)
+{
+	int h = 1, w = 1;
+	double *temp_row = new double[cols];
+	double *temp_col = new double[rows];
+
+	while (w < cols || h < rows)
+	{
+		if (h < rows)
+		for (int i = 0; i < 2 * w; i++)
+		{
+			for (int j = 0; j < rows; j++)
+				temp_col[j] = matrix[j][i];
+
+			Haar_CompositionStep(temp_col, h, normal);
+
+			for (int j = 0; j < rows; j++)
+				matrix[j][i] = temp_col[j];
+		}
+
+		if (w < cols)
+		for (int i = 0; i < 2 * h; i++)
+		{
+			for (int j = 0; j < cols; j++)
+				temp_row[j] = matrix[i][j];
+
+			Haar_CompositionStep(temp_row, w, normal);
+
+			for (int j = 0; j < cols; j++)
+				matrix[i][j] = temp_row[j];
+		}
+
+		if (w < cols) w = w * 2;
+		if (h < rows) h = h * 2;
+	}
+
+
+	if (normal)
+	{
+		for (int i = 0; i < rows; i++)
+		for (int j = 0; j < cols; j++)
+			matrix[i][j] = matrix[i][j] * cols;
+	}
+
+	delete[] temp_row;
+	delete[] temp_col;
+}
+
+void Haar_MatrixComposition(double **matrix, int rows, int cols, bool normal, bool standard)
+{
+	/*
+	if (rows != cols)
+	{
+	cout << "Não é uma matriz quadrada!" << endl;
+	return;
+	}
+	*/
+
+	if (standard) Haar_StandardComposition(matrix, rows, cols, normal);
+	else          Haar_NonStandardComposition(matrix, rows, cols, normal);
+}
+
 void gnuplot_dat(const char *filename, double *x, double *y, int n)
 {
 	ofstream out;
