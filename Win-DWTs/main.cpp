@@ -588,16 +588,116 @@ void test1(); // 22/07/2014
 
 int main(int argc, char **argv)
 {
-	test0();
+	test1();
+
+	//cin.get();
 
 	return 0;
 }
 
 #define POINTS 1024
 
+void matrixCopy(double **m1, double **m2, int x, int y)
+{
+	for (int i = 0; i < x; i++)
+	{
+		for (int j = 0; j < y; j++)
+		{
+			m2[i][j] = m1[i][j];
+		}
+	}
+}
+
 void test1()
 {
+	double **matrix = new double*[POINTS];
+	double **test = new double*[POINTS];
 
+	for (int i = 0; i < POINTS; i++)
+	{
+		matrix[i] = new double[POINTS];
+		test[i] = new double[POINTS];
+	}
+
+	for (int i = 0; i < POINTS; i++)
+	{
+		for (int j = 0; j < POINTS; j++)
+		{
+			matrix[i][j] = (i + 1) + (j + 1);
+			test[i][j] = (i + 1) + (j + 1);
+		}
+	}
+
+	cout << endl << endl << "Decomposicao:" << endl << endl;
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixDecomposition(test, POINTS, POINTS, false, true);
+	VinisMatrixNormalization(test, POINTS, true, false);
+
+	cout << "Metodo Padrao Novo: " << GetCounter() << endl;
+	matrixCopy(matrix, test, POINTS, POINTS);
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixDecomposition(test, POINTS, POINTS, true, true);
+
+	cout << "Metodo Padrao Original: " << GetCounter() << endl;
+	matrixCopy(matrix, test, POINTS, POINTS);
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixDecomposition(test, POINTS, POINTS, false, false);
+	VinisMatrixNormalization(test, POINTS, false, false);
+
+	cout << "Metodo Nao-Padrao Novo: " << GetCounter() << endl;
+	matrixCopy(matrix, test, POINTS, POINTS);
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixDecomposition(test, POINTS, POINTS, true, false);
+
+	cout << "Metodo Nao-Padrao Original: " << GetCounter() << endl;
+
+	cout << endl << endl << "Composicao:" << endl << endl;
+	matrixCopy(test, matrix, POINTS, POINTS);
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixComposition(test, POINTS, POINTS, false, true);
+	VinisMatrixNormalization(test, POINTS, true, true);
+
+	cout << "Metodo Padrao Novo: " << GetCounter() << endl;
+	matrixCopy(matrix, test, POINTS, POINTS);
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixComposition(test, POINTS, POINTS, true, true);
+
+	cout << "Metodo Padrao Original: " << GetCounter() << endl;
+	matrixCopy(matrix, test, POINTS, POINTS);
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixComposition(test, POINTS, POINTS, false, false);
+	VinisMatrixNormalization(test, POINTS, false, true);
+
+	cout << "Metodo Nao-Padrao Novo: " << GetCounter() << endl;
+	matrixCopy(matrix, test, POINTS, POINTS);
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixComposition(test, POINTS, POINTS, true, false);
+
+	cout << "Metodo Nao-Padrao Original: " << GetCounter() << endl;
+
+
+	for (int i = 0; i < POINTS; i++)
+	{
+		delete[] matrix[i];
+	}
+
+	delete[] matrix;
 }
 
 #define PI atan(1) * 4
