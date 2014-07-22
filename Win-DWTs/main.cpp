@@ -1,8 +1,37 @@
 #include <iostream>
 #include <cmath>
 #include <fstream>
+#include <windows.h>
 
 using namespace std;
+
+double PCFreq = 0.0;
+__int64 CounterStart = 0;
+
+void StartCounter()
+{
+	LARGE_INTEGER li;
+	if (!QueryPerformanceFrequency(&li))
+		cout << "QueryPerformanceFrequency failed!\n";
+
+	PCFreq = double(li.QuadPart) / 1000.0;
+
+	QueryPerformanceCounter(&li);
+	CounterStart = li.QuadPart;
+}
+
+double GetCounter()
+{
+	LARGE_INTEGER li;
+	QueryPerformanceCounter(&li);
+	return double(li.QuadPart - CounterStart) / PCFreq;
+}
+
+void ResetCounter()
+{
+	PCFreq = 0.0;
+	CounterStart = 0;
+}
 
 // Passo de composição tipo Haar de um vetor.
 void Haar_CompositionStep(double *vec, int n, bool normal)
