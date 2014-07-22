@@ -209,7 +209,7 @@ void Haar_Decomposition(double *vec, int n, bool normal)
 	}
 }
 
-#define ERROR 0.0000000001
+#define THRESHOLD_ERROR 0.0000000001
 
 void Haar_Compress(double *vec, int n, double percentage)
 {
@@ -248,7 +248,7 @@ void Haar_Compress(double *vec, int n, double percentage)
 		if (s < pow(e, 2.0)) tMin = t;
 		else tMax = t;
 
-	} while ((tMax - tMin) > ERROR);
+	} while ((tMax - tMin) > THRESHOLD_ERROR);
 
 	for (int i = 0; i < n; i++)
 	{
