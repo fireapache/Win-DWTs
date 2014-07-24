@@ -585,10 +585,11 @@ void gnuplot_dat_VWdecomposition(const char *file1, const char *file2, double x1
 
 void test0(); // 27/06/2014
 void test1(); // 22/07/2014
+void test2(); // 24/07/2014
 
 int main(int argc, char **argv)
 {
-	test1();
+	test2();
 
 	//cin.get();
 
@@ -605,6 +606,118 @@ void matrixCopy(double **m1, double **m2, int x, int y)
 		{
 			m2[i][j] = m1[i][j];
 		}
+	}
+}
+
+void test2_1()
+{
+	double **matrix = new double*[POINTS];
+	double **test = new double*[POINTS];
+
+	for (int i = 0; i < POINTS; i++)
+	{
+		matrix[i] = new double[POINTS];
+		test[i] = new double[POINTS];
+	}
+
+	for (int i = 0; i < POINTS; i++)
+	{
+		for (int j = 0; j < POINTS; j++)
+		{
+			matrix[i][j] = (i + 1) + (j + 1);
+			test[i][j] = (i + 1) + (j + 1);
+		}
+	}
+
+	cout << '\t';
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixDecomposition(test, POINTS, POINTS, false, true);
+	VinisMatrixNormalization(test, POINTS, true, false);
+
+	cout << GetCounter() << '\t';
+	matrixCopy(matrix, test, POINTS, POINTS);
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixDecomposition(test, POINTS, POINTS, true, true);
+
+	cout << GetCounter() << '\t';
+	matrixCopy(matrix, test, POINTS, POINTS);
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixDecomposition(test, POINTS, POINTS, false, false);
+	VinisMatrixNormalization(test, POINTS, false, false);
+
+	cout << GetCounter() << '\t';
+	matrixCopy(matrix, test, POINTS, POINTS);
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixDecomposition(test, POINTS, POINTS, true, false);
+
+	cout << GetCounter() << '\t';
+
+	cout << '\t';
+	matrixCopy(test, matrix, POINTS, POINTS);
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixComposition(test, POINTS, POINTS, false, true);
+	VinisMatrixNormalization(test, POINTS, true, true);
+
+	cout << GetCounter() << '\t';
+	matrixCopy(matrix, test, POINTS, POINTS);
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixComposition(test, POINTS, POINTS, true, true);
+
+	cout << GetCounter() << '\t';
+	matrixCopy(matrix, test, POINTS, POINTS);
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixComposition(test, POINTS, POINTS, false, false);
+	VinisMatrixNormalization(test, POINTS, false, true);
+
+	cout << GetCounter() << '\t';
+	matrixCopy(matrix, test, POINTS, POINTS);
+	ResetCounter();
+	StartCounter();
+
+	Haar_MatrixComposition(test, POINTS, POINTS, true, false);
+
+	cout << GetCounter() << endl;
+
+
+	for (int i = 0; i < POINTS; i++)
+	{
+		delete[] matrix[i];
+	}
+
+	delete[] matrix;
+}
+
+void test2()
+{
+	cout << endl << endl << "Decomposicao:";
+	cout << '\t' << "MPN";
+	cout << '\t' << "MPO";
+	cout << '\t' << "MNPN";
+	cout << '\t' << "MNPO";
+	cout << '\t' << "Composicao";
+	cout << '\t' << "MPN";
+	cout << '\t' << "MPO";
+	cout << '\t' << "MNPN";
+	cout << '\t' << "MNPO";
+	cout << endl << endl;
+
+	for (int i = 0; i < 15; i++)
+	{
+		test2_1();
 	}
 }
 
